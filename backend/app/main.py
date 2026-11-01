@@ -1,9 +1,9 @@
 import asyncio
 import contextlib
 import logging
+import threading
 import uuid
 from collections.abc import AsyncIterator
-from concurrent.futures import ThreadPoolExecutor
 
 from fastapi import APIRouter, Depends, FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
@@ -29,13 +29,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         settings.download_dir.mkdir(parents=True, exist_ok=True)
         registry.remove_orphan_dirs()
-        app.state.executor = ThreadPoolExecutor(
-            max_workers=settings.max_concurrent_jobs, thread_name_prefix="download"
-        )
         cleanup = asyncio.create_task(_cleanup_loop(registry, settings.cleanup_interval_seconds))
         yield
         cleanup.cancel()
-        app.state.executor.shutdown(wait=False, cancel_futures=True)
+
+    download_slots = threading.BoundedSemaphore(settings.max_concurrent_jobs)
 
     # Servidor pessoal: sem páginas de documentação públicas e sem CORS.
     app = FastAPI(title="VideoGrabber API", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
@@ -62,12 +60,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return await asyncio.to_thread(resolve, url)
 
     @router.post("/jobs", status_code=202)
-    async def create_job(body: CreateJobRequest, request: Request) -> CreateJobResponse:
+    async def create_job(body: CreateJobRequest) -> CreateJobResponse:
         url = validate_url(body.url)
         if body.preset_id not in PRESETS:
             raise APIError(400, "invalid_preset", "Preset desconhecido.")
         job = registry.create(url, body.preset_id)
-        request.app.state.executor.submit(run_download, job.id, registry)
+        _start_download(job.id, registry, download_slots)
         return CreateJobResponse(job_id=job.id)
 
     @router.get("/jobs/{job_id}")
@@ -99,6 +97,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app.include_router(router)
     return app
+
+
+def _start_download(job_id: str, registry: JobRegistry, slots: threading.BoundedSemaphore) -> None:
+    """Uma thread daemon por job (fica `queued` até ter vaga).
+
+    Daemon para o servidor poder desligar no meio de um download ou de um ffmpeg; as
+    sobras são apagadas por `remove_orphan_dirs` na próxima inicialização.
+    """
+
+    def work() -> None:
+        with slots:
+            run_download(job_id, registry)
+
+    threading.Thread(target=work, name=f"download-{job_id}", daemon=True).start()
 
 
 def _get_job(registry: JobRegistry, job_id: uuid.UUID) -> Job:

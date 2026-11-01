@@ -16,7 +16,7 @@ enum APIError: Error, Equatable, LocalizedError {
         case .notConfigured:
             String(localized: "Configure o endereço do servidor e o token em Ajustes.")
         case .noConnection:
-            String(localized: "Sem conexão com a internet.")
+            String(localized: "Sem conexão. Confira o Wi-Fi ou os dados móveis. Se o servidor estiver na sua casa, confira também a permissão de Rede Local (Ajustes › Privacidade e Segurança › Rede Local).")
         case .unauthorized:
             String(localized: "Token de acesso inválido.")
         case .serverUnreachable:

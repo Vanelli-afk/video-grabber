@@ -88,9 +88,21 @@ def ensure_supported(info: dict[str, Any]) -> None:
 
 
 def map_ytdlp_error(exc: Exception) -> APIError:
+    # Frases inteiras: a mensagem inclui o ID do vídeo, que pode conter "drm" por acaso.
     text = str(exc).lower()
-    if "drm" in text:
+    extractor_failed = APIError(502, "extractor_failed", "Falha ao extrair o vídeo. Tente atualizar o yt-dlp no servidor.")
+    if "drm protected" in text:
         return APIError(422, "unsupported_content", "Conteúdo protegido por DRM não é suportado.")
+    # Antes de "sign in": o YouTube bloqueou o IP do servidor, o vídeo em si está disponível.
+    if "not a bot" in text:
+        return APIError(
+            502,
+            "youtube_blocked",
+            "O YouTube bloqueou temporariamente este servidor. Tente mais tarde ou rode o servidor em outra rede.",
+        )
+    # Todos os presets têm fallback; sem formato algum é o extrator que não entendeu a página.
+    if "requested format is not available" in text:
+        return extractor_failed
     unavailable_markers = (
         "video unavailable",
         "private video",
@@ -102,7 +114,7 @@ def map_ytdlp_error(exc: Exception) -> APIError:
     )
     if any(marker in text for marker in unavailable_markers):
         return APIError(404, "video_unavailable", "Vídeo indisponível, privado ou com restrição de acesso.")
-    return APIError(502, "extractor_failed", "Falha ao extrair o vídeo. Tente atualizar o yt-dlp no servidor.")
+    return extractor_failed
 
 
 def _size(fmt: dict[str, Any] | None, duration: float) -> int | None:

@@ -30,6 +30,14 @@ Uma linha por decisão não especificada no roteiro (ou divergência dele).
 - 2026-11-01 — Testes usam `httpx` (pedido no roteiro); o aviso do Starlette 1.x que sugere `httpx2` é filtrado em `pyproject.toml`.
 - 2026-11-01 — App FastAPI criado por fábrica (`create_app`, `uvicorn --factory`), para os testes injetarem `Settings`.
 
+## Inspeção pós-Fase 2
+
+- 2026-11-01 — Erro do yt-dlp "Sign in to confirm you're not a bot" (bloqueio do IP do servidor) agora é `502 youtube_blocked`, não `404 video_unavailable`; novo código documentado em docs/API.md.
+- 2026-11-01 — Detecção de DRM procura a frase "drm protected": antes, `"drm"` solto casava com IDs de vídeo como `aBdRm7xYz12`.
+- 2026-11-01 — "Requested format is not available" vira `extractor_failed` (todos os presets têm fallback, então é falha do extrator).
+- 2026-11-01 — Downloads rodam em threads **daemon** limitadas por `BoundedSemaphore(MAX_CONCURRENT_JOBS)` em vez de `ThreadPoolExecutor`: o executor faz o Python esperar downloads/ffmpeg em andamento ao desligar. Sobras são apagadas na inicialização seguinte.
+- 2026-11-01 — iOS: timeout por endpoint (`Endpoint.timeout`, 15 s para `/health` e consulta de job) em vez dos 60 s padrão do URLSession.
+
 ## Fase 2 — Esqueleto iOS
 
 - 2026-11-01 — Sem Mac: o app é compilado e testado no **GitHub Actions** (`macos-latest`, repositório público) e instalado no iPhone pelo **Sideloadly** a partir de um `.ipa` sem assinatura gerado pelo CI.

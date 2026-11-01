@@ -33,6 +33,7 @@ final class APIClient: APIClientProtocol {
 
         var request = URLRequest(url: baseURL.appending(path: endpoint.path))
         request.httpMethod = endpoint.method
+        request.timeoutInterval = endpoint.timeout
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         if endpoint.requiresAuthentication {
             guard let token = configuration.token, !token.isEmpty else { throw APIError.notConfigured }

@@ -27,6 +27,7 @@ Todas as respostas de erro têm o mesmo corpo:
 | 422 | `unsupported_content` | Playlist, canal, live (inclusive agendada) ou DRM |
 | 500 | `internal_error` | Falha inesperada ao preparar o arquivo (aparece em `error_code` do job) |
 | 502 | `extractor_failed` | O yt-dlp falhou (geralmente precisa atualizar) |
+| 502 | `youtube_blocked` | O YouTube bloqueou o IP do servidor ("confirm you're not a bot"); o vídeo em si está disponível. Comum em VPS |
 
 ## `GET /health`
 
@@ -59,7 +60,7 @@ Body: `{ "url": "https://www.youtube.com/watch?v=..." }`
 - `estimated_bytes` é aproximado. Quando o formato não informa tamanho, é estimado por taxa de bits × duração.
 - Os três presets sempre aparecem, nesta ordem.
 
-Erros: `400 invalid_url`, `404 video_unavailable`, `422 unsupported_content`, `502 extractor_failed`.
+Erros: `400 invalid_url`, `404 video_unavailable`, `422 unsupported_content`, `502 extractor_failed`, `502 youtube_blocked`.
 
 ## `POST /v1/jobs`
 

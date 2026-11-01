@@ -37,6 +37,7 @@ struct APIClientTests {
         let request = try #require(recorder.requests.first)
         #expect(request.url?.absoluteString == "http://192.168.0.10:8080/health")
         #expect(request.value(forHTTPHeaderField: "Authorization") == nil)
+        #expect(request.timeoutInterval == 15)
     }
 
     @Test func verifyTokenAcceptsJobNotFoundAndSendsBearer() async throws {

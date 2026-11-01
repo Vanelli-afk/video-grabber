@@ -124,7 +124,15 @@ def test_resolve_missing_body_returns_400(client, auth):
     [
         ("ERROR: [youtube] abc123: Video unavailable", 404, "video_unavailable"),
         ("ERROR: [youtube] abc123: Private video. Sign in if you've been granted access", 404, "video_unavailable"),
+        ("ERROR: [youtube] abc123: This video is not available", 404, "video_unavailable"),
+        ("ERROR: [youtube] abc123: Sign in to confirm your age", 404, "video_unavailable"),
+        ("ERROR: [youtube] abc123: Sign in to confirm you’re not a bot. Use --cookies", 502, "youtube_blocked"),
+        ("ERROR: [youtube] abc123: Requested format is not available. Use --list-formats", 502, "extractor_failed"),
+        ("ERROR: [youtube] abc123: This live stream recording is not available.", 404, "video_unavailable"),
         ("ERROR: [youtube] abc123: This video is DRM protected", 422, "unsupported_content"),
+        # ID com "drm" no meio não pode virar erro de DRM
+        ("ERROR: [youtube] aBdRm7xYz12: Video unavailable", 404, "video_unavailable"),
+        ("ERROR: [youtube] aBdRm7xYz12: Unable to extract player response", 502, "extractor_failed"),
         ("ERROR: [youtube] abc123: Unable to extract player response", 502, "extractor_failed"),
     ],
 )

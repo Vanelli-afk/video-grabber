@@ -1,3 +1,5 @@
+import threading
+import time
 import uuid
 
 import pytest
@@ -89,6 +91,33 @@ def test_delete_while_preparing_cancels_job(client, auth, scenario, settings):
     assert client.delete(f"/v1/jobs/{job_id}", headers=auth).status_code == 204
     scenario.release.set()
     assert client.get(f"/v1/jobs/{job_id}", headers=auth).status_code == 404
+
+
+def test_download_threads_are_daemon_so_shutdown_never_waits(client, auth, scenario):
+    scenario.release.clear()
+    try:
+        job_id = create_job(client, auth)
+        thread = next(t for t in threading.enumerate() if t.name == f"download-{job_id}")
+        assert thread.daemon
+    finally:
+        scenario.release.set()
+
+
+def test_at_most_max_concurrent_jobs_prepare_at_once(client, auth, scenario, settings):
+    assert settings.max_concurrent_jobs == 2
+    scenario.release.clear()
+    try:
+        job_ids = [create_job(client, auth) for _ in range(3)]
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline:
+            statuses = [client.get(f"/v1/jobs/{j}", headers=auth).json()["status"] for j in job_ids]
+            if statuses.count("preparing") == 2:
+                break
+            time.sleep(0.02)
+        assert sorted(statuses) == ["preparing", "preparing", "queued"]
+    finally:
+        scenario.release.set()
+    assert all(wait_for_job(client, j, auth)["status"] == "ready" for j in job_ids)
 
 
 def test_failed_download_reports_error(client, auth, scenario, settings):

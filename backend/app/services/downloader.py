@@ -103,7 +103,11 @@ def run_download(job_id: str, registry: JobRegistry) -> None:
         logger.error("Job %s terminou sem gerar %s", job_id, file_path.name)
         _fail(registry, job_id, APIError(500, "internal_error", "O servidor não gerou o arquivo esperado."))
         return
-    registry.mark_ready(job_id, file_path, display_file_name(info.get("title") or "", info.get("id") or "", extension))
+    try:
+        registry.mark_ready(job_id, file_path, display_file_name(info.get("title") or "", info.get("id") or "", extension))
+    except FileNotFoundError:
+        # DELETE chegou entre a checagem acima e o mark_ready: o job já não existe.
+        shutil.rmtree(job_dir, ignore_errors=True)
 
 
 def _fail(registry: JobRegistry, job_id: str, error: APIError) -> None:
