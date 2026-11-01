@@ -60,6 +60,8 @@ final class AppDependencies {
 
     private static func makeModelContainer(inMemory: Bool) -> ModelContainer {
         let schema = Schema([VideoItem.self, DownloadJob.self])
+        // Na primeira abertura a pasta ainda não existe e o CoreData registra vários erros antes de criá-la.
+        try? FileManager.default.createDirectory(at: .applicationSupportDirectory, withIntermediateDirectories: true)
         do {
             return try ModelContainer(
                 for: schema,
