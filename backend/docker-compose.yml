@@ -1,0 +1,15 @@
+services:
+  api:
+    build: .
+    image: videograbber-api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DOWNLOAD_DIR: /data/downloads
+    ports:
+      - "8080:8080"
+    volumes:
+      - downloads:/data/downloads
+
+volumes:
+  downloads:

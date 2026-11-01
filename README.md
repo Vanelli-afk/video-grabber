@@ -1,0 +1,75 @@
+# VideoGrabber
+
+App iOS (SwiftUI, iOS 17+) + backend pessoal (FastAPI + yt-dlp + ffmpeg) para baixar vídeos do YouTube que você tem direito de baixar e assisti-los offline no iPhone.
+
+> **Aviso legal.** Este projeto é para **uso pessoal**, com conteúdo que você tem direito de baixar (próprio, licenciado ou com permissão). Baixar vídeos do YouTube pode violar os Termos de Serviço da plataforma e direitos autorais. O projeto não contorna DRM nem acessa conteúdo privado, com login ou pago. **Não** será publicado na App Store: a instalação é direta pelo Xcode no seu aparelho (com conta gratuita o app expira em 7 dias) ou por assinatura pessoal.
+
+## Estado
+
+| Fase | Situação |
+|---|---|
+| 1 — Backend | ✅ Implementado e testado (pytest). Falta validar com `docker compose up` |
+| 2–7 — App iOS | ⏳ Requer Mac com Xcode |
+
+## Backend
+
+### Rodar com Docker
+
+```bash
+cd backend
+cp .env.example .env
+# edite .env e defina API_TOKEN (gere com: python -c "import secrets; print(secrets.token_urlsafe(32))")
+docker compose up --build
+```
+
+O serviço fica em `http://<ip-da-máquina>:8080`. Teste rápido:
+
+```bash
+TOKEN=...   # o mesmo do .env
+curl http://localhost:8080/health
+curl -X POST http://localhost:8080/v1/resolve -H "Authorization: Bearer $TOKEN" \
+     -H "Content-Type: application/json" -d '{"url":"https://www.youtube.com/watch?v=jNQXAC9IVRw"}'
+JOB=$(curl -s -X POST http://localhost:8080/v1/jobs -H "Authorization: Bearer $TOKEN" \
+     -H "Content-Type: application/json" -d '{"url":"https://www.youtube.com/watch?v=jNQXAC9IVRw","preset_id":"mp4_720"}' \
+     | python3 -c "import sys,json; print(json.load(sys.stdin)['job_id'])")
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/v1/jobs/$JOB          # repita até status=ready
+curl -H "Authorization: Bearer $TOKEN" -H "Range: bytes=0-1023" -o parte.bin -D - \
+     http://localhost:8080/v1/jobs/$JOB/file                                       # 206 Partial Content
+curl -X DELETE -H "Authorization: Bearer $TOKEN" http://localhost:8080/v1/jobs/$JOB
+```
+
+O contrato completo está em [docs/API.md](docs/API.md).
+
+### Testes
+
+```bash
+cd backend
+python -m venv .venv
+.venv/bin/pip install -r requirements-dev.txt     # Windows: .venv\Scripts\pip
+.venv/bin/pytest
+```
+
+Os testes substituem o yt-dlp por um falso e não acessam a rede.
+
+### Atualizar o yt-dlp
+
+O yt-dlp quebra com frequência quando o YouTube muda. Sintoma: `502 extractor_failed`. Para atualizar:
+
+1. Troque a versão em `backend/requirements.txt` (`yt-dlp[default,deno]==<nova>`). Veja as versões em https://github.com/yt-dlp/yt-dlp/releases.
+2. `docker compose up --build -d`
+3. Confira a versão em `GET /health` (ou em Ajustes → "Testar conexão" no app).
+
+## App iOS
+
+Pendente (fases 2–7). Comandos previstos, num Mac com Xcode e XcodeGen:
+
+```bash
+cd ios && xcodegen generate
+xcodebuild -scheme VideoGrabber -destination 'platform=iOS Simulator,name=iPhone 16' test
+```
+
+## Documentação
+
+- [docs/API.md](docs/API.md): contrato do backend
+- [docs/DECISIONS.md](docs/DECISIONS.md): decisões tomadas durante a implementação
+- [CLAUDE.md](CLAUDE.md): especificação do projeto

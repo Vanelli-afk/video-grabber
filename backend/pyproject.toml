@@ -1,0 +1,7 @@
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+filterwarnings = [
+    # O roteiro pede httpx; o Starlette 1.x avisa que prefere httpx2.
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+]
