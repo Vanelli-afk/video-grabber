@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass
 from typing import Any, Literal
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlunsplit
 
 import yt_dlp
 from yt_dlp.utils import DownloadError
@@ -18,6 +18,8 @@ BASE_YDL_OPTIONS: dict[str, Any] = {
     "no_warnings": True,
     "noprogress": True,
     "noplaylist": True,
+    # Só extratores do YouTube: sem extrator genérico, nenhuma URL vira requisição a outro host.
+    "allowed_extractors": ["youtube", "youtube:tab"],
     "logger": logging.getLogger("videograbber.ytdlp"),
 }
 
@@ -52,20 +54,27 @@ PRESETS: dict[str, PresetSpec] = {
 
 
 def validate_url(url: str) -> str:
-    """Aceita apenas http(s) de youtube.com / youtu.be. Devolve a URL sem espaços."""
+    """Aceita apenas http(s) de youtube.com / youtu.be.
+
+    Devolve uma URL reconstruída a partir das partes validadas (sempre https), para que
+    o yt-dlp nunca receba uma string que outro parser possa interpretar com outro host.
+    """
     url = url.strip()
-    if not url or len(url) > MAX_URL_LENGTH:
+    if not url or len(url) > MAX_URL_LENGTH or any(c == "\\" or c.isspace() or not c.isprintable() for c in url):
         raise APIError(400, "invalid_url", "URL inválida.")
     try:
         parts = urlsplit(url)
         host = (parts.hostname or "").lower()
+        has_port = parts.port is not None
     except ValueError:
         raise APIError(400, "invalid_url", "URL inválida.") from None
+    if parts.username is not None or parts.password is not None or has_port:
+        raise APIError(400, "invalid_url", "URL inválida.")
     if parts.scheme not in ("http", "https") or host not in ALLOWED_HOSTS:
         raise APIError(400, "invalid_url", "Apenas links do YouTube são aceitos.")
     if parts.path.rstrip("/") == "/playlist":
         raise APIError(422, "unsupported_content", "Playlists não são suportadas.")
-    return url
+    return urlunsplit(("https", host, parts.path, parts.query, ""))
 
 
 def ensure_supported(info: dict[str, Any]) -> None:

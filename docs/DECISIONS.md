@@ -12,6 +12,7 @@ Uma linha por decisão não especificada no roteiro (ou divergência dele).
 
 - 2026-11-01 — Corpo de erro padronizado: `{ "error_code", "message" }` (o roteiro só listava os códigos).
 - 2026-11-01 — Erros de validação do FastAPI (422 padrão) viram `400 invalid_request`, para não colidir com `422 unsupported_content`.
+- 2026-11-01 — Contra SSRF por diferença entre parsers de URL: `validate_url` rejeita `\`, espaços e caracteres de controle, usuário/senha e porta, e devolve uma URL **reconstruída** (`https://<host validado><path>?<query>`); o yt-dlp carrega só os extratores `youtube` e `youtube:tab` (`allowed_extractors`), sem o genérico.
 - 2026-11-01 — `job_id` é tipado como UUID nas rotas e no registro, o que impede path traversal no `DELETE`.
 - 2026-11-01 — `DELETE /v1/jobs/{id}` é idempotente (204 mesmo para job inexistente), para simplificar a limpeza pelo app.
 - 2026-11-01 — Novos códigos `409 job_not_ready`, `404 job_not_found`, `400 invalid_preset` e `500 internal_error`, além dos do roteiro.

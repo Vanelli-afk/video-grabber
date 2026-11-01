@@ -6,18 +6,18 @@ from tests.conftest import SAMPLE_INFO, VIDEO_URL
 
 
 @pytest.mark.parametrize(
-    "url",
+    ("url", "expected"),
     [
-        "https://www.youtube.com/watch?v=abc123",
-        "https://youtube.com/watch?v=abc123&list=PL123",
-        "https://m.youtube.com/watch?v=abc123",
-        "https://youtu.be/abc123",
-        "http://www.youtube.com/shorts/abc123",
-        "  https://youtu.be/abc123  ",
+        ("https://www.youtube.com/watch?v=abc123", "https://www.youtube.com/watch?v=abc123"),
+        ("https://youtube.com/watch?v=abc123&list=PL123", "https://youtube.com/watch?v=abc123&list=PL123"),
+        ("https://m.youtube.com/watch?v=abc123", "https://m.youtube.com/watch?v=abc123"),
+        ("https://youtu.be/abc123", "https://youtu.be/abc123"),
+        ("http://WWW.YouTube.com/shorts/abc123", "https://www.youtube.com/shorts/abc123"),
+        ("  https://youtu.be/abc123#t=10  ", "https://youtu.be/abc123"),
     ],
 )
-def test_validate_url_accepts_youtube_links(url):
-    assert validate_url(url) == url.strip()
+def test_validate_url_accepts_and_canonicalizes_youtube_links(url, expected):
+    assert validate_url(url) == expected
 
 
 @pytest.mark.parametrize(
@@ -31,6 +31,15 @@ def test_validate_url_accepts_youtube_links(url):
         "https://evil.example/?u=https://youtube.com",
         "file:///etc/passwd",
         "https://www.youtube.com/watch?v=" + "a" * 3000,
+        # Diferenças entre parsers de URL (SSRF)
+        "https://evil.example\\@youtube.com/watch?v=abc123",
+        "https://evil.example\\.youtube.com/",
+        "https://user:pass@youtube.com/watch?v=abc123",
+        "https://evil.example@youtube.com/watch?v=abc123",
+        "https://youtube.com:8443/watch?v=abc123",
+        "https://youtube.com/watch?v=abc\t123",
+        "https://youtube.com/watch?v=abc\x00123",
+        "https://youtube.com/watch?v=abc 123",
     ],
 )
 def test_validate_url_rejects_other_urls(url):
@@ -85,6 +94,17 @@ def test_resolve_returns_metadata_and_presets(client, auth, scenario):
     assert [p["id"] for p in body["presets"]] == ["best_mp4", "mp4_720", "audio_m4a"]
     assert [p["kind"] for p in body["presets"]] == ["video", "video", "audio"]
     assert scenario.options[0]["noplaylist"] is True
+    assert scenario.options[0]["allowed_extractors"] == ["youtube", "youtube:tab"]
+
+
+def test_allowed_extractors_load_only_youtube():
+    import yt_dlp as real_yt_dlp  # o fixture `scenario` não está ativo aqui
+
+    from app.services.resolver import BASE_YDL_OPTIONS
+
+    with real_yt_dlp.YoutubeDL(BASE_YDL_OPTIONS) as ydl:
+        names = {ie.IE_NAME for ie in ydl._ies.values()}
+    assert names == {"youtube", "youtube:tab"}
 
 
 def test_resolve_invalid_url_returns_400(client, auth):
