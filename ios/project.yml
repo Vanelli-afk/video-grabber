@@ -53,6 +53,7 @@ targets:
     scheme:
       testTargets:
         - VideoGrabberTests
+        - VideoGrabberUITests
       gatherCoverageData: true
 
   VideoGrabberShare:
@@ -88,3 +89,15 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: YES
         PRODUCT_BUNDLE_IDENTIFIER: com.vanelliafk.videograbber.tests
+
+  VideoGrabberUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: VideoGrabberUITests
+    dependencies:
+      - target: VideoGrabber
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.vanelliafk.videograbber.uitests

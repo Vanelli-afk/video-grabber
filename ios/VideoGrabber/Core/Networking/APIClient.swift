@@ -15,8 +15,7 @@ final class APIClient: APIClientProtocol {
     }
 
     func health() async throws -> HealthResponse {
-        let data = try await send(.health)
-        return try decode(HealthResponse.self, from: data)
+        try decode(HealthResponse.self, from: try await send(.health))
     }
 
     func verifyToken() async throws {
@@ -27,7 +26,28 @@ final class APIClient: APIClientProtocol {
         }
     }
 
-    private func send(_ endpoint: Endpoint) async throws -> Data {
+    func resolve(url: String) async throws -> ResolveResponse {
+        try decode(ResolveResponse.self, from: try await send(.resolve, body: ResolveRequestBody(url: url)))
+    }
+
+    func createJob(url: String, presetID: String) async throws -> String {
+        let body = CreateJobRequestBody(url: url, presetId: presetID)
+        return try decode(CreateJobResponse.self, from: try await send(.createJob, body: body)).jobId
+    }
+
+    func jobStatus(id: String) async throws -> JobStatusResponse {
+        try decode(JobStatusResponse.self, from: try await send(.job(id: id)))
+    }
+
+    func fileRequest(id: String) async throws -> URLRequest {
+        try await makeRequest(.jobFile(id: id))
+    }
+
+    func deleteJob(id: String) async throws {
+        _ = try await send(.deleteJob(id: id))
+    }
+
+    private func makeRequest(_ endpoint: Endpoint, body: (any Encodable)? = nil) async throws -> URLRequest {
         let configuration = await configuration()
         guard let baseURL = configuration.baseURL else { throw APIError.notConfigured }
 
@@ -39,6 +59,17 @@ final class APIClient: APIClientProtocol {
             guard let token = configuration.token, !token.isEmpty else { throw APIError.notConfigured }
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
+        if let body {
+            let encoder = JSONEncoder()
+            encoder.keyEncodingStrategy = .convertToSnakeCase
+            request.httpBody = try encoder.encode(body)
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
+        return request
+    }
+
+    private func send(_ endpoint: Endpoint, body: (any Encodable)? = nil) async throws -> Data {
+        let request = try await makeRequest(endpoint, body: body)
 
         let result: (Data, URLResponse)
         do {

@@ -46,18 +46,26 @@ extension APIError {
         }
     }
 
-    init(statusCode: Int, body: Data) {
-        let serverError = try? JSONDecoder().decode(ServerErrorBody.self, from: body)
-        switch (statusCode, serverError?.errorCode) {
-        case (401, _):
+    /// A partir do `error_code` do servidor (corpo de erro HTTP ou job com `status = failed`).
+    init(serverCode: String, message: String) {
+        switch serverCode {
+        case "unauthorized":
             self = .unauthorized
-        case (_, "video_unavailable"):
+        case "video_unavailable":
             self = .videoUnavailable
-        case (_, "unsupported_content"):
+        case "unsupported_content":
             self = .unsupportedContent
-        case (_, let code?):
-            self = .server(code: code, message: serverError?.message ?? "")
         default:
+            self = .server(code: serverCode, message: message)
+        }
+    }
+
+    init(statusCode: Int, body: Data) {
+        if statusCode == 401 {
+            self = .unauthorized
+        } else if let serverError = try? JSONDecoder().decode(ServerErrorBody.self, from: body) {
+            self = APIError(serverCode: serverError.errorCode, message: serverError.message)
+        } else {
             self = .unknown
         }
     }
