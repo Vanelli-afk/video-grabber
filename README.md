@@ -8,7 +8,7 @@ App iOS (SwiftUI, iOS 17+) + backend pessoal (FastAPI + yt-dlp + ffmpeg) para ba
 
 | Fase | Situação |
 |---|---|
-| 1 — Backend | ✅ Implementado; pytest e imagem Docker testados no CI |
+| 1 — Backend | ✅ Concluída: pytest + imagem Docker no CI; download real (720p H.264/AAC e M4A, Range 206) validado |
 | 2 — Esqueleto do app | ✅ Build + 22 testes verdes no CI, 0 warnings. Falta testar no iPhone |
 | 3–7 — App iOS | ⏳ |
 
@@ -42,6 +42,12 @@ curl -X DELETE -H "Authorization: Bearer $TOKEN" http://localhost:8080/v1/jobs/$
 ```
 
 O contrato completo está em [docs/API.md](docs/API.md).
+
+### Rodar no Windows sem Docker
+
+Com o `.venv` criado (veja "Testes" abaixo), o `.env` preenchido e o **ffmpeg** instalado (`winget install Gyan.FFmpeg`), dê dois cliques em [backend/iniciar-servidor.bat](backend/iniciar-servidor.bat). Ele sobe o servidor na porta 8080 e mostra o endereço para usar no app.
+
+> Não exponha a porta 8080 na internet (port forwarding no roteador). Para acessar de fora de casa, use uma VPN como o Tailscale.
 
 ### Testes
 
@@ -85,6 +91,7 @@ Sem Mac, o workflow [.github/workflows/ios.yml](.github/workflows/ios.yml) faz o
 
 ## Documentação
 
+- [HOW-TO-USE.md](HOW-TO-USE.md): **guia para leigos**, da instalação no iPhone ao uso do app
 - [docs/API.md](docs/API.md): contrato do backend
 - [docs/DECISIONS.md](docs/DECISIONS.md): decisões tomadas durante a implementação
 - [CLAUDE.md](CLAUDE.md): especificação do projeto
