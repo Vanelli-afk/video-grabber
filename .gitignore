@@ -1,0 +1,21 @@
+# Segredos
+.env
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+backend/data/
+
+# Xcode / iOS
+ios/*.xcodeproj/
+ios/build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+
+# Sistema
+.DS_Store
+Thumbs.db
