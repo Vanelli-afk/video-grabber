@@ -8,8 +8,11 @@ App iOS (SwiftUI, iOS 17+) + backend pessoal (FastAPI + yt-dlp + ffmpeg) para ba
 
 | Fase | Situação |
 |---|---|
-| 1 — Backend | ✅ Implementado e testado (pytest). Falta validar com `docker compose up` |
-| 2–7 — App iOS | ⏳ Requer Mac com Xcode |
+| 1 — Backend | ✅ Implementado; pytest e imagem Docker testados no CI |
+| 2 — Esqueleto do app | ✅ Build + 22 testes verdes no CI, 0 warnings. Falta testar no iPhone |
+| 3–7 — App iOS | ⏳ |
+
+O app é compilado num Mac na nuvem (GitHub Actions). Cada build bem-sucedido gera o artefato **VideoGrabber-ipa**, que é instalado no iPhone pelo [Sideloadly](https://sideloadly.io) (veja "Instalar no iPhone sem Mac", abaixo).
 
 ## Backend
 
@@ -61,12 +64,24 @@ O yt-dlp quebra com frequência quando o YouTube muda. Sintoma: `502 extractor_f
 
 ## App iOS
 
-Pendente (fases 2–7). Comandos previstos, num Mac com Xcode e XcodeGen:
+### Build e testes
+
+Num Mac com Xcode e XcodeGen:
 
 ```bash
 cd ios && xcodegen generate
 xcodebuild -scheme VideoGrabber -destination 'platform=iOS Simulator,name=iPhone 16' test
 ```
+
+Sem Mac, o workflow [.github/workflows/ios.yml](.github/workflows/ios.yml) faz o mesmo a cada push em `ios/` e publica o `.ipa`.
+
+### Instalar no iPhone sem Mac
+
+1. Instale no Windows o **iTunes** e o **iCloud** (versões do site da Apple, não precisa entrar na conta) e o **Sideloadly**.
+2. Baixe o artefato **VideoGrabber-ipa** do último build verde em *Actions → iOS* e descompacte o `.zip`.
+3. Ligue o iPhone no cabo, toque em **Confiar** no iPhone, arraste o `VideoGrabber.ipa` para o Sideloadly, digite seu Apple ID e clique em **Start**.
+4. Na primeira vez, no iPhone: *Ajustes → Privacidade e Segurança → Modo de Desenvolvedor* (ativar e reiniciar) e *Ajustes → Geral → VPN e Gerenciamento de Dispositivo → seu e-mail → Confiar*.
+5. Com Apple ID gratuito o app expira em **7 dias**: repita o passo 3 (os dados do app são mantidos).
 
 ## Documentação
 

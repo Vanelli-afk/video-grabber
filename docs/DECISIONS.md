@@ -29,3 +29,17 @@ Uma linha por decisão não especificada no roteiro (ou divergência dele).
 - 2026-11-01 — Desde o fim de 2025 o yt-dlp precisa de um runtime JavaScript para o YouTube; `requirements.txt` usa `yt-dlp[default,deno]`, que instala `yt-dlp-ejs` e o Deno via pip.
 - 2026-11-01 — Testes usam `httpx` (pedido no roteiro); o aviso do Starlette 1.x que sugere `httpx2` é filtrado em `pyproject.toml`.
 - 2026-11-01 — App FastAPI criado por fábrica (`create_app`, `uvicorn --factory`), para os testes injetarem `Settings`.
+
+## Fase 2 — Esqueleto iOS
+
+- 2026-11-01 — Sem Mac: o app é compilado e testado no **GitHub Actions** (`macos-latest`, repositório público) e instalado no iPhone pelo **Sideloadly** a partir de um `.ipa` sem assinatura gerado pelo CI.
+- 2026-11-01 — O CI escolhe o simulador de iPhone mais recente disponível no runner, em vez de fixar "iPhone 16" (o nome muda entre versões do Xcode).
+- 2026-11-01 — Builds do CI usam `CODE_SIGNING_ALLOWED=NO`; quem assina é o Sideloadly com o Apple ID do usuário.
+- 2026-11-01 — Bundle ID `com.vanelliafk.videograbber` (extensão `.share`).
+- 2026-11-01 — `SWIFT_TREAT_WARNINGS_AS_ERRORS = YES` em todos os targets, para garantir "zero warnings".
+- 2026-11-01 — O projeto `.xcodeproj` e os `Info.plist` são gerados pelo XcodeGen e ficam fora do git.
+- 2026-11-01 — "Testar conexão" chama `/health` (que é público) **e** `GET /v1/jobs/00000000-0000-0000-0000-000000000000`: 404 `job_not_found` prova que o token foi aceito; 401 mostra "Token de acesso inválido". Assim não foi preciso mudar o contrato da API.
+- 2026-11-01 — O endereço do servidor aceita `192.168.0.10:8080` sem esquema (assume `http://`).
+- 2026-11-01 — Token no Keychain com `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` (necessário para downloads em segundo plano com a tela bloqueada).
+- 2026-11-01 — Dependências passadas por inicializador (`AppDependencies`) em vez de `Environment`, por ora; o `DownloadManager` da Fase 3 irá para o `Environment`, como pede o roteiro.
+- 2026-11-01 — Ícone do app fica para a Fase 7 (o roteiro prevê um placeholder lá).
