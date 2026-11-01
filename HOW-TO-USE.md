@@ -2,7 +2,7 @@
 
 Guia passo a passo, sem termos técnicos, para instalar o VideoGrabber no iPhone e usá-lo no dia a dia.
 
-> 📌 **Situação atual do app:** já dá para instalar o app, configurar e **testar a conexão** com o computador. A parte de **colar um link e baixar vídeos** está sendo construída agora; este guia mostra como ela vai funcionar e será atualizado quando ela chegar.
+> 📌 **Situação atual do app:** já dá para **colar um link e baixar** vídeos e áudios, que ficam guardados no iPhone. Ainda em construção: **assistir pelo próprio app**, salvar em Fotos, continuar baixando com o app fechado e compartilhar direto do YouTube. Este guia é atualizado a cada novidade.
 
 ---
 
@@ -218,15 +218,39 @@ O app tem **três abas** na parte de baixo da tela:
   - **720p**: boa imagem, arquivo menor. Bom para economizar espaço.
   - **Somente áudio (M4A)**: só o som. Ótimo para músicas, aulas e podcasts.
 
-### Baixar um vídeo (em construção 🚧)
+### Baixar um vídeo ✅
 
-Quando essa parte chegar, o caminho será:
+1. Confira se o **servidor está ligado** no computador (a janela preta da [seção 5](#5-ligar-o-servidor-toda-vez-que-for-baixar)).
+2. No **YouTube**, abra o vídeo e toque em **Compartilhar › Copiar link**.
+3. No VideoGrabber, aba **Adicionar**, toque no botão **Colar**. O link aparece no campo.
+   - Também dá para digitar ou colar o link direto no campo.
+4. Toque em **Buscar**. Em alguns segundos aparecem a **miniatura**, o **título**, o **canal** e a **duração**.
+5. Escolha a **qualidade**. Embaixo de cada opção aparece o tamanho aproximado do arquivo.
+6. Toque em **Baixar**. O app abre a aba **Fila** sozinho.
+7. Acompanhe a barra de progresso:
+   - **Preparando no servidor**: o computador está buscando o vídeo no YouTube.
+   - **Baixando**: o vídeo está vindo do computador para o iPhone.
+   - **Concluído**: pronto! O vídeo está na aba **Biblioteca**.
 
-1. No **YouTube**, toque em **Compartilhar › Copiar link**.
-2. No VideoGrabber, aba **Adicionar**, toque em **Colar da área de transferência** e depois em **Buscar**.
-3. Confira a miniatura, o título e a duração. Escolha a qualidade e toque em **Baixar**.
-4. Acompanhe na aba **Fila**. Pode sair do app, que o download continua e você recebe um aviso quando terminar.
-5. O vídeo aparece na **Biblioteca**. Toque para assistir. Segure o dedo sobre ele para **Salvar em Fotos**, **Compartilhar** ou **Apagar**.
+> ⚠️ **Por enquanto, deixe o app aberto** enquanto baixa. Se você sair do app, o download pode parar e aparecer como "interrompido"; aí é só tocar em **Tentar de novo**. Continuar baixando com o app fechado chega em breve.
+
+**Na aba Fila você pode:**
+
+| Ícone | O que faz |
+|---|---|
+| ✖️ | **Cancela** um download em andamento |
+| 🔄 | **Tenta de novo** um download que falhou ou foi cancelado |
+| Deslizar o dedo para a esquerda | **Remove** da lista um download terminado (o vídeo continua na Biblioteca) |
+
+Dá para pedir vários downloads seguidos: o app baixa **2 de cada vez** e os outros esperam a vez ("Na fila").
+
+### Biblioteca
+
+Mostra os vídeos e áudios já baixados, com canal, duração e tamanho.
+
+> 🚧 Em breve: tocar para **assistir** (com Picture-in-Picture), **Salvar em Fotos**, **Compartilhar** e **Apagar**.
+
+### Compartilhar direto do YouTube (em breve 🚧)
 
 Também vai dar para mandar o link direto do YouTube ou do Safari: **Compartilhar › VideoGrabber**.
 
@@ -260,6 +284,8 @@ Com um Apple ID gratuito, a Apple permite usar o app por **7 dias**. Depois diss
 | **"Vídeo indisponível, privado ou com restrição de acesso"** | O vídeo foi apagado, é privado, exige login ou idade. Não dá para baixar |
 | **"Conteúdo não suportado"** | É uma playlist, uma transmissão ao vivo ou um conteúdo protegido. Use o link de **um único vídeo** |
 | **"O YouTube bloqueou temporariamente este servidor"** | O YouTube desconfiou do computador. Espere algumas horas ou use outra internet |
+| **"O download foi interrompido. Toque em Tentar de novo."** | O app foi fechado no meio do download. Toque em 🔄 na aba Fila, com o app aberto |
+| **"Cole um link de vídeo do YouTube"** (em vermelho, na aba Adicionar) | O texto colado não é um link do YouTube. Copie de novo pelo botão **Compartilhar › Copiar link** do YouTube |
 | **"Falha ao extrair o vídeo. Tente atualizar o yt-dlp"** | O YouTube mudou algo e a ferramenta precisa ser atualizada. Veja "Atualizar o yt-dlp" no `README.md` ou peça para quem instalou |
 
 ### Problemas na instalação

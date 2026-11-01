@@ -9,8 +9,9 @@ App iOS (SwiftUI, iOS 17+) + backend pessoal (FastAPI + yt-dlp + ffmpeg) para ba
 | Fase | Situação |
 |---|---|
 | 1 — Backend | ✅ Concluída: pytest + imagem Docker no CI; download real (720p H.264/AAC e M4A, Range 206) validado |
-| 2 — Esqueleto do app | ✅ Build + 22 testes verdes no CI, 0 warnings. Falta testar no iPhone |
-| 3–7 — App iOS | ⏳ |
+| 2 — Esqueleto do app | ✅ Build + testes verdes no CI, 0 warnings. Falta testar no iPhone |
+| 3 — Resolver e baixar | ✅ Build + 52 testes + XCUITest do fluxo verdes no CI, 0 warnings. Falta testar no iPhone |
+| 4–7 — App iOS | ⏳ |
 
 O app é compilado num Mac na nuvem (GitHub Actions). Cada build bem-sucedido gera o artefato **VideoGrabber-ipa**, que é instalado no iPhone pelo [Sideloadly](https://sideloadly.io) (veja "Instalar no iPhone sem Mac", abaixo).
 
