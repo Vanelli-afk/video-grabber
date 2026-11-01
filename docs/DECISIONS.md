@@ -38,6 +38,21 @@ Uma linha por decisão não especificada no roteiro (ou divergência dele).
 - 2026-11-01 — Downloads rodam em threads **daemon** limitadas por `BoundedSemaphore(MAX_CONCURRENT_JOBS)` em vez de `ThreadPoolExecutor`: o executor faz o Python esperar downloads/ffmpeg em andamento ao desligar. Sobras são apagadas na inicialização seguinte.
 - 2026-11-01 — iOS: timeout por endpoint (`Endpoint.timeout`, 15 s para `/health` e consulta de job) em vez dos 60 s padrão do URLSession.
 
+## Fase 3 — Resolver e baixar
+
+- 2026-11-01 — `DownloadJob` ganhou `videoID`, `channel` e `durationSeconds` (além do roteiro): são necessários para criar o `VideoItem` ao terminar, sem consultar o servidor de novo.
+- 2026-11-01 — Estado "resolving" do `DownloadJob` = criando o job no servidor (`POST /v1/jobs`); a extração de metadados (`/v1/resolve`) acontece antes, na tela Adicionar.
+- 2026-11-01 — Transições válidas numa tabela estática em `DownloadManager.transitions`; `failed`/`cancelled` → `queued` é o "Tentar de novo".
+- 2026-11-01 — Download em primeiro plano nesta fase (`URLSessionFileDownloader`, uma `URLSession` por arquivo com delegate para progresso); a Fase 5 troca por sessão em segundo plano. O arquivo é movido dentro de `didFinishDownloadingTo`.
+- 2026-11-01 — Ao abrir o app, jobs que estavam em `resolving`/`preparing`/`downloading` viram `failed` ("interrompido") até a Fase 5 reconectar tarefas em segundo plano.
+- 2026-11-01 — Limite de 2 downloads simultâneos já na Fase 3 (era da Fase 5): é só a contagem de tarefas ativas.
+- 2026-11-01 — Arquivos em `Application Support/Videos/<UUID>.mp4|m4a` e miniaturas em `Application Support/Thumbnails/<UUID>.jpg`; o `VideoItem` guarda só o nome relativo.
+- 2026-11-01 — Progresso da transferência só é gravado a cada 1% para não redesenhar a fila a cada pedaço recebido.
+- 2026-11-01 — A Biblioteca mostra uma lista simples nesta fase (critério de aceite: "arquivo aparece em VideoItem"); miniaturas, player e ações são da Fase 4.
+- 2026-11-01 — "Colar" usa o `PasteButton` do SwiftUI (não pede permissão de área de transferência a cada uso).
+- 2026-11-01 — O XCUITest usa serviços falsos no próprio app, ativados pelo argumento `-ui-testing` e compilados só em Debug (`UITestSupport`).
+- 2026-11-01 — Remover da fila (deslizar) só é possível para downloads terminados; o vídeo continua na Biblioteca.
+
 ## Fase 2 — Esqueleto iOS
 
 - 2026-11-01 — Sem Mac: o app é compilado e testado no **GitHub Actions** (`macos-latest`, repositório público) e instalado no iPhone pelo **Sideloadly** a partir de um `.ipa` sem assinatura gerado pelo CI.

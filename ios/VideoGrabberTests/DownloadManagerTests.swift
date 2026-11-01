@@ -41,6 +41,7 @@ struct DownloadStateTransitionTests {
 
 @MainActor
 struct DownloadManagerTests {
+    @MainActor
     private struct Harness {
         let container: ModelContainer
         let manager: DownloadManager
