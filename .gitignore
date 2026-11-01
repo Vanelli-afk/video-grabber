@@ -9,9 +9,14 @@ __pycache__/
 .pytest_cache/
 backend/data/
 
-# Xcode / iOS
+# Xcode / iOS (o projeto e os Info.plist são gerados pelo XcodeGen)
 ios/*.xcodeproj/
+ios/VideoGrabber/Resources/Info.plist
+ios/VideoGrabberShare/Info.plist
 ios/build/
+ios/Payload/
+*.ipa
+xcodebuild-*.log
 DerivedData/
 xcuserdata/
 *.xcuserstate

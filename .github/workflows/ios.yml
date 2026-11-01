@@ -1,0 +1,104 @@
+name: iOS
+
+on:
+  push:
+    branches: [main]
+    paths: ["ios/**", ".github/workflows/ios.yml"]
+  pull_request:
+    paths: ["ios/**", ".github/workflows/ios.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build + testes (simulador)
+    runs-on: macos-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Ferramentas
+        run: |
+          xcodebuild -version
+          brew install xcodegen
+          xcodegen --version
+
+      - name: Gerar projeto (XcodeGen)
+        run: xcodegen generate
+
+      - name: Escolher simulador de iPhone
+        id: simulator
+        run: |
+          UDID=$(xcrun simctl list devices available --json | python3 -c '
+          import json, sys
+          devices = json.load(sys.stdin)["devices"]
+          runtimes = sorted((r for r in devices if "iOS" in r), reverse=True)
+          print(next(d["udid"] for r in runtimes for d in devices[r] if d["name"].startswith("iPhone")))
+          ')
+          xcrun simctl list devices available | grep "$UDID"
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: xcodebuild test
+        run: |
+          set +e
+          xcodebuild test \
+            -project VideoGrabber.xcodeproj \
+            -scheme VideoGrabber \
+            -destination "id=${{ steps.simulator.outputs.udid }}" \
+            CODE_SIGNING_ALLOWED=NO > xcodebuild-test.log 2>&1
+          status=$?
+          set -e
+          grep -E "error:|warning:|Test (run|Suite|Case)|✔|✘|\*\* (BUILD|TEST)" xcodebuild-test.log | tail -300 || true
+          exit $status
+
+      - name: Log completo
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: xcodebuild-test-log
+          path: ios/xcodebuild-test.log
+
+  ipa:
+    name: IPA sem assinatura (para o Sideloadly)
+    needs: test
+    runs-on: macos-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Gerar projeto (XcodeGen)
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Build Release para iPhone
+        run: |
+          xcodebuild build \
+            -project VideoGrabber.xcodeproj \
+            -scheme VideoGrabber \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO > xcodebuild-ipa.log 2>&1 || { grep -E "error:" xcodebuild-ipa.log; tail -80 xcodebuild-ipa.log; exit 1; }
+
+      - name: Empacotar .ipa
+        run: |
+          mkdir Payload
+          cp -R build/Build/Products/Release-iphoneos/VideoGrabber.app Payload/
+          zip -qry VideoGrabber.ipa Payload
+          ls -lh VideoGrabber.ipa
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: VideoGrabber-ipa
+          path: ios/VideoGrabber.ipa

@@ -1,0 +1,56 @@
+name: Backend
+
+on:
+  push:
+    branches: [main]
+    paths: ["backend/**", ".github/workflows/backend.yml"]
+  pull_request:
+    paths: ["backend/**", ".github/workflows/backend.yml"]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: pytest
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - run: pytest -q
+
+  docker:
+    name: Imagem Docker
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      # Token descartável, só para este teste.
+      API_TOKEN: ci-token-0123456789abcdef
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build
+        run: docker build -t videograbber-api backend
+
+      - name: Sobe o container e testa
+        run: |
+          docker run -d --name api -p 8080:8080 -e API_TOKEN="$API_TOKEN" videograbber-api
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/health && break; sleep 1; done
+          echo
+          curl -fsS http://127.0.0.1:8080/health | grep -q '"status":"ok"'
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8080/v1/resolve \
+            -H 'Content-Type: application/json' -d '{"url":"https://youtu.be/abc"}')
+          test "$code" = "401"
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8080/v1/resolve \
+            -H "Authorization: Bearer $API_TOKEN" -H 'Content-Type: application/json' -d '{"url":"https://vimeo.com/1"}')
+          test "$code" = "400"
+          docker exec api ffmpeg -version | head -1
+          docker exec api deno --version | head -1
+
+      - name: Logs do container
+        if: always()
+        run: docker logs api || true
