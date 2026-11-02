@@ -59,7 +59,7 @@ struct AddLinkViewModelTests {
 
         await harness.viewModel.search()
 
-        #expect(harness.viewModel.state == .resolved(.sample))
+        #expect(harness.viewModel.state == .resolved(.sample, sourceURL: "https://www.youtube.com/watch?v=jNQXAC9IVRw"))
         #expect(harness.viewModel.selectedPresetID == "audio_m4a")
     }
 
@@ -86,6 +86,39 @@ struct AddLinkViewModelTests {
         await harness.viewModel.search()
 
         #expect(harness.viewModel.state == .failed(message: APIError.videoUnavailable.localizedDescription))
+    }
+
+    @Test func editingTheFieldAfterSearchHidesTheOldVideo() async throws {
+        let harness = try makeHarness()
+        harness.viewModel.urlText = "https://youtu.be/jNQXAC9IVRw"
+        await harness.viewModel.search()
+
+        harness.viewModel.urlText = "https://youtu.be/outroVideo"
+        harness.viewModel.download()
+
+        #expect(harness.viewModel.state == .idle)
+        #expect(try harness.container.mainContext.fetch(FetchDescriptor<DownloadJob>()).isEmpty)
+    }
+
+    @Test func resultForALinkNoLongerInTheFieldIsDiscarded() async throws {
+        let api = StubAPIClient()
+        let gate = Gate()
+        api.resolveGate = gate
+        let harness = try makeHarness(api: api)
+        harness.viewModel.urlText = "https://youtu.be/A"
+
+        let search = Task { await harness.viewModel.search() }
+        for _ in 0..<1000 where harness.viewModel.state != .resolving {
+            await Task.yield()
+        }
+        #expect(harness.viewModel.state == .resolving)
+        harness.viewModel.paste("https://youtu.be/B")
+        await gate.open()
+        await search.value
+
+        #expect(harness.viewModel.state == .idle)
+        #expect(harness.viewModel.urlText == "https://youtu.be/B")
+        #expect(harness.viewModel.canSearch)
     }
 
     @Test func downloadEnqueuesJobAndOpensQueue() async throws {

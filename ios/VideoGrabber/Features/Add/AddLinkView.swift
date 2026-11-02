@@ -2,12 +2,14 @@ import SwiftUI
 
 struct AddLinkView: View {
     let dependencies: AppDependencies
-    @State private var viewModel: AddLinkViewModel
+    @Bindable private var viewModel: AddLinkViewModel
     @State private var isShowingSettings = false
+    /// Criado só ao tocar na engrenagem (lê o Keychain), não a cada redesenho.
+    @State private var settingsViewModel: SettingsViewModel?
 
     init(dependencies: AppDependencies) {
         self.dependencies = dependencies
-        _viewModel = State(initialValue: dependencies.makeAddLinkViewModel())
+        viewModel = dependencies.addLinkViewModel
     }
 
     var body: some View {
@@ -33,7 +35,7 @@ struct AddLinkView: View {
                             Task { await viewModel.search() }
                         }
                     }
-                case .resolved(let video):
+                case .resolved(let video, _):
                     videoSection(video)
                     presetSection(video)
                     Section {
@@ -53,6 +55,7 @@ struct AddLinkView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
+                        settingsViewModel = dependencies.makeSettingsViewModel()
                         isShowingSettings = true
                     } label: {
                         Label("Ajustes", systemImage: "gearshape")
@@ -61,7 +64,9 @@ struct AddLinkView: View {
                 }
             }
             .navigationDestination(isPresented: $isShowingSettings) {
-                SettingsView(viewModel: dependencies.makeSettingsViewModel())
+                if let settingsViewModel {
+                    SettingsView(viewModel: settingsViewModel)
+                }
             }
         }
     }
@@ -107,14 +112,7 @@ struct AddLinkView: View {
     private func videoSection(_ video: ResolveResponse) -> some View {
         Section {
             HStack(alignment: .top, spacing: 12) {
-                AsyncImage(url: video.thumbnail) { image in
-                    image.resizable().scaledToFill()
-                } placeholder: {
-                    Rectangle().fill(.quaternary)
-                }
-                .frame(width: 120, height: 68)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .accessibilityHidden(true)
+                RemoteThumbnail(url: video.thumbnail, width: 120, cornerRadius: 8)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(video.title)

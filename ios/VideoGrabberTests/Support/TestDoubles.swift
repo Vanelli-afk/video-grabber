@@ -32,6 +32,7 @@ final class StubAPIClient: APIClientProtocol, @unchecked Sendable {
     /// Consumidos em ordem; o último se repete.
     private var _jobStatuses: [JobStatusResponse] = [.ready]
     private var _deletedJobIDs: [String] = []
+    private var _resolveGate: Gate?
 
     init(
         healthResult: Result<HealthResponse, APIError> = .success(HealthResponse(status: "ok", ytdlpVersion: "2026.10.26")),
@@ -44,6 +45,12 @@ final class StubAPIClient: APIClientProtocol, @unchecked Sendable {
     var resolveResult: Result<ResolveResponse, APIError> {
         get { lock.withLock { _resolveResult } }
         set { lock.withLock { _resolveResult = newValue } }
+    }
+
+    /// Com uma trava, `resolve` só responde depois de `gate.open()`.
+    var resolveGate: Gate? {
+        get { lock.withLock { _resolveGate } }
+        set { lock.withLock { _resolveGate = newValue } }
     }
 
     var jobStatuses: [JobStatusResponse] {
@@ -64,7 +71,10 @@ final class StubAPIClient: APIClientProtocol, @unchecked Sendable {
     }
 
     func resolve(url: String) async throws -> ResolveResponse {
-        try resolveResult.get()
+        if let gate = resolveGate {
+            await gate.wait()
+        }
+        return try resolveResult.get()
     }
 
     func createJob(url: String, presetID: String) async throws -> String {

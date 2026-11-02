@@ -13,6 +13,8 @@ final class AppDependencies {
     let apiClient: any APIClientProtocol
     let modelContainer: ModelContainer
     let downloadManager: DownloadManager
+    /// Único: a aba Adicionar é recriada a cada redesenho da TabView, o ViewModel não.
+    let addLinkViewModel: AddLinkViewModel
 
     init() {
         let isUITesting = UITestSupport.isActive
@@ -36,26 +38,29 @@ final class AppDependencies {
             ? FileManager.default.temporaryDirectory.appending(path: "UITests", directoryHint: .isDirectory)
             : URL.applicationSupportDirectory
 
-        self.settings = settings
-        self.router = AppRouter()
-        self.tokenStore = tokenStore
-        self.apiClient = apiClient
-        self.modelContainer = modelContainer
-        self.downloadManager = DownloadManager(
+        let router = AppRouter()
+        let downloadManager = DownloadManager(
             modelContext: modelContainer.mainContext,
             apiClient: apiClient,
             fileDownloader: fileDownloader,
             videoStore: VideoStore(baseDirectory: storageDirectory),
             thumbnailLoader: { url in try await URLSession.shared.data(from: url).0 }
         )
+
+        self.settings = settings
+        self.router = router
+        self.tokenStore = tokenStore
+        self.apiClient = apiClient
+        self.modelContainer = modelContainer
+        self.downloadManager = downloadManager
+        self.addLinkViewModel = AddLinkViewModel(
+            apiClient: apiClient, downloadManager: downloadManager, settings: settings, router: router
+        )
     }
 
+    /// Um novo a cada vez que os Ajustes são abertos, para recarregar o token salvo.
     func makeSettingsViewModel() -> SettingsViewModel {
         SettingsViewModel(settings: settings, tokenStore: tokenStore, apiClient: apiClient)
-    }
-
-    func makeAddLinkViewModel() -> AddLinkViewModel {
-        AddLinkViewModel(apiClient: apiClient, downloadManager: downloadManager, settings: settings, router: router)
     }
 
     private static func makeModelContainer(inMemory: Bool) -> ModelContainer {

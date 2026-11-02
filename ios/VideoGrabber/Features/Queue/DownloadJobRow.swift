@@ -9,14 +9,7 @@ struct DownloadJobRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            AsyncImage(url: job.thumbnailURL.flatMap(URL.init(string:))) { image in
-                image.resizable().scaledToFill()
-            } placeholder: {
-                Rectangle().fill(.quaternary)
-            }
-            .frame(width: 80, height: 45)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            .accessibilityHidden(true)
+            RemoteThumbnail(url: job.thumbnailURL.flatMap(URL.init(string:)), width: 80, cornerRadius: 6)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(job.title)
