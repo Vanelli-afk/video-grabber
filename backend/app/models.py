@@ -16,11 +16,6 @@ class HealthResponse(BaseModel):
     ytdlp_version: str
 
 
-class ErrorResponse(BaseModel):
-    error_code: str
-    message: str
-
-
 class ResolveRequest(BaseModel):
     url: str
 

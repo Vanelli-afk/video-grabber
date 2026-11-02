@@ -3,7 +3,7 @@ import threading
 import time
 import uuid
 from collections.abc import Callable
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from app.models import JobStatus
@@ -16,7 +16,6 @@ class Job:
     id: str
     url: str
     preset_id: str
-    created_at: float
     status: JobStatus = JobStatus.QUEUED
     progress: float = 0.0
     file_path: Path | None = None
@@ -24,7 +23,7 @@ class Job:
     file_name: str | None = None
     error_code: str | None = None
     error_message: str | None = None
-    finished_at: float | None = field(default=None)
+    finished_at: float | None = None
 
 
 class JobRegistry:
@@ -45,7 +44,7 @@ class JobRegistry:
         return self.download_dir / job_id
 
     def create(self, url: str, preset_id: str) -> Job:
-        job = Job(id=str(uuid.uuid4()), url=url, preset_id=preset_id, created_at=self._clock())
+        job = Job(id=str(uuid.uuid4()), url=url, preset_id=preset_id)
         with self._lock:
             self._jobs[job.id] = job
             return replace(job)
