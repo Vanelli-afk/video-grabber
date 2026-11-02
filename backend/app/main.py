@@ -11,9 +11,9 @@ from fastapi.responses import FileResponse, JSONResponse
 from yt_dlp.version import __version__ as ytdlp_version
 
 from app.config import Settings
-from app.errors import APIError
+from app.errors import APIError, error_response
 from app.models import CreateJobRequest, CreateJobResponse, HealthResponse, JobResponse, JobStatus, ResolveRequest, ResolveResponse
-from app.security import require_token
+from app.security import BodySizeLimitMiddleware, require_token
 from app.services.downloader import run_download
 from app.services.jobs import Job, JobRegistry
 from app.services.resolver import PRESETS, resolve, validate_url
@@ -37,16 +37,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     # Servidor pessoal: sem páginas de documentação públicas e sem CORS.
     app = FastAPI(title="VideoGrabber API", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+    app.add_middleware(BodySizeLimitMiddleware)
     app.state.settings = settings
     app.state.registry = registry
 
     @app.exception_handler(APIError)
     async def handle_api_error(_: Request, exc: APIError) -> JSONResponse:
-        return JSONResponse(status_code=exc.status_code, content={"error_code": exc.error_code, "message": exc.message})
+        return error_response(exc.status_code, exc.error_code, exc.message)
 
     @app.exception_handler(RequestValidationError)
     async def handle_validation_error(_: Request, __: RequestValidationError) -> JSONResponse:
-        return JSONResponse(status_code=400, content={"error_code": "invalid_request", "message": "Requisição inválida."})
+        return error_response(400, "invalid_request", "Requisição inválida.")
 
     @app.get("/health")
     async def health() -> HealthResponse:

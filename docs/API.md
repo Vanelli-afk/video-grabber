@@ -24,6 +24,7 @@ Todas as respostas de erro têm o mesmo corpo:
 | 404 | `video_unavailable` | Vídeo removido, privado, com login ou só para membros |
 | 404 | `job_not_found` | Job inexistente ou já removido |
 | 409 | `job_not_ready` | Pediu o arquivo antes de `status = ready` |
+| 413 | `payload_too_large` | Corpo acima de 64 KB (inclusive enviado em partes, sem `Content-Length`). Checado antes do token |
 | 422 | `unsupported_content` | Playlist, canal, live (inclusive agendada) ou DRM |
 | 500 | `internal_error` | Falha inesperada ao preparar o arquivo (aparece em `error_code` do job) |
 | 502 | `extractor_failed` | O yt-dlp falhou (geralmente precisa atualizar) |
